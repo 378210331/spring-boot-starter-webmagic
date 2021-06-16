@@ -1,12 +1,11 @@
 package us.codecraft.webmagic.downloader;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Request;
 import us.codecraft.webmagic.Site;
@@ -28,9 +27,8 @@ import java.util.Map;
  * @author code4crafter@gmail.com <br>
  * @since 0.1.0
  */
+@Slf4j
 public class HttpClientDownloader extends AbstractDownloader {
-
-    private Logger logger = LoggerFactory.getLogger(getClass());
 
     private final Map<String, CloseableHttpClient> httpClients = new HashMap<String, CloseableHttpClient>();
 
@@ -48,6 +46,10 @@ public class HttpClientDownloader extends AbstractDownloader {
 
     public void setProxyProvider(ProxyProvider proxyProvider) {
         this.proxyProvider = proxyProvider;
+    }
+
+    public ProxyProvider getProxyProvider() {
+        return this.proxyProvider ;
     }
 
     private CloseableHttpClient getHttpClient(Site site) {
@@ -68,7 +70,6 @@ public class HttpClientDownloader extends AbstractDownloader {
         return httpClient;
     }
 
-    @Override
     public Page download(Request request, Task task) {
         if (task == null || task.getSite() == null) {
             throw new NullPointerException("task or site can not be null");
@@ -82,10 +83,10 @@ public class HttpClientDownloader extends AbstractDownloader {
             httpResponse = httpClient.execute(requestContext.getHttpUriRequest(), requestContext.getHttpClientContext());
             page = handleResponse(request, request.getCharset() != null ? request.getCharset() : task.getSite().getCharset(), httpResponse, task);
             onSuccess(request);
-            logger.info("downloading page success {}", request.getUrl());
+            log.info("downloading page success {}", request.getUrl());
             return page;
         } catch (IOException e) {
-            logger.warn("download page {} error,due to {}", request.getUrl(), e.getMessage());
+            log.warn("download page {} error,due to {}", request.getUrl(), e.getMessage());
             onError(request);
             return page;
         } finally {
@@ -99,7 +100,6 @@ public class HttpClientDownloader extends AbstractDownloader {
         }
     }
 
-    @Override
     public void setThread(int thread) {
         httpClientGenerator.setPoolSize(thread);
     }
@@ -130,7 +130,7 @@ public class HttpClientDownloader extends AbstractDownloader {
         String charset = CharsetUtils.detectCharset(contentType, contentBytes);
         if (charset == null) {
             charset = Charset.defaultCharset().name();
-            logger.warn("Charset autodetect failed, use {} as charset. Please specify charset in Site.setCharset()", Charset.defaultCharset());
+            log.warn("Charset autodetect failed, use {} as charset. Please specify charset in Site.setCharset()", Charset.defaultCharset());
         }
         return charset;
     }
